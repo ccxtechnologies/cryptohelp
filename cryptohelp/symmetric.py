@@ -79,8 +79,8 @@ def decrypt_file(key: bytes, encrypted_file: str, plain_file: str):
             dec = box.decrypt(chunk)
 
             if not checksum:
-                checksum = dec[:8]
-                dec = dec[8:]
+                checksum = dec[:32]
+                dec = dec[32:]
 
             sha256.update(dec)
             fo.write(dec)
