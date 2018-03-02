@@ -5,6 +5,8 @@ import nacl.utils
 import hashlib
 import os
 
+_file_version = b'v001'
+
 
 def create_key() -> bytes:
     """Create a key suitable for use with these symmetric crypto tools.
@@ -41,7 +43,7 @@ def encrypt_file(key: bytes, plain_file: str, encrypted_file: str):
 
     with open(encrypted_file, 'wb') as fo, open(plain_file, 'rb') as fi:
         chunk = fi.read(16312)  # 16384 - 32 (checksum) - 40 (NaCl adds 40)
-        chunk = checksum + chunk
+        chunk = _file_version + checksum + chunk
 
         nonce = nacl.utils.random(nacl.secret.SecretBox.NONCE_SIZE)
         enc = box.encrypt(chunk, nonce)
@@ -79,12 +81,17 @@ def decrypt_file(key: bytes, encrypted_file: str, plain_file: str):
             dec = box.decrypt(chunk)
 
             if not checksum:
-                checksum = dec[:32]
+                version = dec[:4]
+                checksum = dec[4:32]
                 dec = dec[32:]
 
             sha256.update(dec)
             fo.write(dec)
 
+    if version != _file_version:
+        os.remove(plain_file)
+        raise RuntimeError("Bad File-Type")
+
     if checksum != sha256.digest():
         os.remove(plain_file)
-        raise RuntimeError("Incorrect Checksum")
+        raise RuntimeError("Bad Checksum")
