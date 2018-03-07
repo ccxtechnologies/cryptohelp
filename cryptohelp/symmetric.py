@@ -3,6 +3,7 @@
 import nacl.secret
 import nacl.utils
 import hashlib
+import binascii
 import os
 
 _file_version = b'v001'
@@ -17,6 +18,37 @@ def create_key() -> bytes:
     """
 
     return nacl.utils.random(nacl.secret.SecretBox.KEY_SIZE)
+
+
+def encrypt(key: bytes, message: bytes):
+    """Encrypt a message using NaCl and a symmetric key.
+
+    Args:
+        key (bytes): key created by create_key()
+        message (str): message to encrypt
+
+    Returns:
+        An encrypted message (bytes).
+    """
+
+    box = nacl.secret.SecretBox(key)
+    nonce = nacl.utils.random(nacl.secret.SecretBox.NONCE_SIZE)
+    return box.encrypt(message, nonce)
+
+
+def decrypt(key: bytes, message: bytes):
+    """Decrypt a message using NaCl and a symmetric key.
+
+    Args:
+        key (bytes): key created by create_key()
+        message (str): message to decrypt
+
+    Returns:
+        An decrypted message (bytes).
+    """
+
+    box = nacl.secret.SecretBox(key)
+    return box.decrypt(message)
 
 
 def encrypt_file(key: bytes, plain_file: str, encrypted_file: str):
