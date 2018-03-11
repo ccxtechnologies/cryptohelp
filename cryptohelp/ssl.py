@@ -313,9 +313,10 @@ def create_certificate_from_ca(
 
 
 def create_self_signed_certificate(
-        private_key: bytes,
-        passcode: bytes,
-        common_name: bytes,
+        filename: str,
+        private_key_file: str,
+        passcode: str,
+        common_name: str,
         dns_names: typing.List = [],
         ip_addresses: typing.List = [],
         country: str = "CA",
@@ -327,8 +328,9 @@ def create_self_signed_certificate(
     """Create a x.509 Certificate.
 
     Args:
-        private_key (bytes): our private key created with create_key
-        passcode (bytes): passcode associated with the private_key
+        filename (str): name of the certificate file to create
+        private_key_file (str): private key file created with create_key_file
+        passcode (str): passcode associated with the private_key
         common_name (bytes): common name for the resulting certificate
         dns_names (list): optional, a list of DNS Names to associate
             with this certificate
@@ -340,10 +342,10 @@ def create_self_signed_certificate(
         organization (str): optional, name of the organization
             the Certificate is for
         cert_length_days (int): optional, valid length of certificate
-
-    Returns:
-        A signed Certificate in PEM format (bytes).
     """
+
+    with open(private_key_file, 'rb') as fi:
+        private_key = fi.read()
 
     _dns_names = [x509.DNSName(n) for n in dns_names]
     _ip_addresses = [
@@ -418,4 +420,5 @@ def create_self_signed_certificate(
             backend=default_backend()
     )
 
-    return client_cert.public_bytes(encoding=serialization.Encoding.PEM)
+    with open(filename, 'wb') as fo:
+        fo.write(client_cert.public_bytes(encoding=serialization.Encoding.PEM))
