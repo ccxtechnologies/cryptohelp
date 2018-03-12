@@ -13,42 +13,36 @@ from cryptography.x509.oid import NameOID
 from cryptography.hazmat.primitives import hashes
 
 
-def create_key(passcode: bytes = b'') -> bytes:
-    """Create a key suitable for use with ssl.
-
-    Returns:
-        A random key which can be used by the ssl tools in this module (bytes).
-    """
-
-    key = rsa.generate_private_key(
-            public_exponent=65537, key_size=4096, backend=default_backend()
-    )
-
-    return key.private_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PrivateFormat.TraditionalOpenSSL,
-            encryption_algorithm=serialization.
-            BestAvailableEncryption(passcode),
-    )
-
-
-def create_key_file(filename: str, passcode: bytes = b''):
+def create_key_file(filename: str, passcode: str = ''):
     """Create a key file suitable for use with ssl.
 
     Returns:
         A random key which can be used by the ssl tools in this module.
     """
 
+    key = rsa.generate_private_key(
+            public_exponent=65537, key_size=4096, backend=default_backend()
+    )
+
+    key_bytes = key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.TraditionalOpenSSL,
+            encryption_algorithm=serialization.BestAvailableEncryption(
+                    passcode.encode()
+            ),
+    )
+
     with open(filename, "wb") as fo:
-        fo.write(create_key(passcode))
+        fo.write(key_bytes)
 
     os.chmod(filename, 0o600)
 
 
 def create_csr(
-        private_key: bytes,
-        passcode: bytes,
-        common_name: bytes,
+        filename: str,
+        private_key_file: str,
+        passcode: str,
+        common_name: str,
         dns_names: typing.List = [],
         ip_addresses: typing.List = [],
         country: str = "CA",
@@ -61,9 +55,10 @@ def create_csr(
     Can be sent to another server which can create an Intermediate Certificate.
 
     Args:
-        private_key (bytes): our private key created with create_key
-        passcode (bytes): passcode associated with the private_key
-        common_name (bytes): common name for the resulting certificate
+        filename (str): name of the certificate file to create
+        private_key_file (str): private key file created with create_key_file
+        passcode (str): passcode associated with the private_key
+        common_name (str): common name for the resulting certificate
         dns_names (list): optional, a list of DNS Names to associate
             with this certificate
         ip_addresses (list): optional, a list of IP Addresses to associate
@@ -78,33 +73,32 @@ def create_csr(
         A signed Certificate Signing Request in PEM format (bytes).
     """
 
+    with open(private_key_file, 'rb') as fi:
+        private_key = fi.read()
+
     _dns_names = [x509.DNSName(n) for n in dns_names]
     _ip_addresses = [
             x509.IPAddress(ipaddress.IPv4Address(str(a))) for a in ip_addresses
     ]
 
     key = serialization.load_pem_private_key(
-            data=private_key, password=passcode, backend=default_backend()
+            data=private_key,
+            password=passcode.encode(),
+            backend=default_backend()
     )
 
     csr = x509.CertificateSigningRequestBuilder().subject_name(
-            x509.Name(
-                    [
-                            x509.NameAttribute(NameOID.COUNTRY_NAME, country),
-                            x509.NameAttribute(
-                                    NameOID.STATE_OR_PROVINCE_NAME, province
-                            ),
-                            x509.NameAttribute(
-                                    NameOID.LOCALITY_NAME, locality
-                            ),
-                            x509.NameAttribute(
-                                    NameOID.ORGANIZATION_NAME, organization
-                            ),
-                            x509.NameAttribute(
-                                    NameOID.COMMON_NAME, common_name
-                            ),
-                    ]
-            )
+            x509.Name([
+                    x509.NameAttribute(NameOID.COUNTRY_NAME, country),
+                    x509.NameAttribute(
+                            NameOID.STATE_OR_PROVINCE_NAME, province
+                    ),
+                    x509.NameAttribute(NameOID.LOCALITY_NAME, locality),
+                    x509.NameAttribute(
+                            NameOID.ORGANIZATION_NAME, organization
+                    ),
+                    x509.NameAttribute(NameOID.COMMON_NAME, common_name),
+            ])
     )
 
     if _dns_names:
@@ -119,29 +113,37 @@ def create_csr(
 
     csr = csr.sign(key, hashes.SHA512(), default_backend())
 
-    return csr.public_bytes(serialization.Encoding.PEM)
+    with open(filename, 'wb') as fo:
+        fo.write(csr.public_bytes(encoding=serialization.Encoding.PEM))
 
 
 def create_certificate_from_csr(
-        ca_private_key: bytes,
-        ca_passcode: bytes,
-        ca_certificate: bytes,
-        csr: bytes,
+        filename: str,
+        csr_file: str,
+        ca_certificate_file: str,
+        ca_private_key_file: str,
+        ca_passcode: str,
         cert_length_days: int = 367
 ) -> bytes:
     """Create a x.509 Certificate from a Certificate Signing Request (CSR).
 
     Args:
-        ca_private_key (bytes): the private key for the root certificate
-        ca_passcode (bytes): passcode associated with the private_key
-        ca_certificate (bytes): root certificate to create the intermediate
-            certificate from in PEM format
-        csr (bytes): CSR in PEM format
+        filename (str): name of the certificate file to create
+        csr_file (str): name of the CSR file to use
+        ca_private_key_file (str): key file for the Certificate Authority
+        ca_certificate_file (str): cert file for the Certificate Authority
+        ca_passcode (str): passcode associated with the private_key
         cert_length_days (int): optional, valid length of certificate
-
-    Returns:
-        A signed Certificate in PEM format (bytes).
     """
+
+    with open(csr_file, 'rb') as fi:
+        csr = fi.read()
+
+    with open(ca_private_key_file, 'rb') as fi:
+        ca_private_key = fi.read()
+
+    with open(ca_certificate_file, 'rb') as fi:
+        ca_certificate = fi.read()
 
     _csr = x509.load_pem_x509_csr(csr, default_backend())
 
@@ -150,7 +152,7 @@ def create_certificate_from_csr(
 
     private_key = serialization.load_pem_private_key(
             data=ca_private_key,
-            password=ca_passcode,
+            password=ca_passcode.encode(),
             backend=default_backend()
     )
 
@@ -192,7 +194,8 @@ def create_certificate_from_csr(
             backend=default_backend()
     )
 
-    return client_cert.public_bytes(encoding=serialization.Encoding.PEM)
+    with open(filename, 'wb') as fo:
+        fo.write(client_cert.public_bytes(encoding=serialization.Encoding.PEM))
 
 
 def create_certificate_from_ca(
@@ -255,23 +258,17 @@ def create_certificate_from_ca(
     builder = builder.not_valid_after(valid_to)
 
     builder = builder.subject_name(
-            x509.Name(
-                    [
-                            x509.NameAttribute(NameOID.COUNTRY_NAME, country),
-                            x509.NameAttribute(
-                                    NameOID.STATE_OR_PROVINCE_NAME, province
-                            ),
-                            x509.NameAttribute(
-                                    NameOID.LOCALITY_NAME, locality
-                            ),
-                            x509.NameAttribute(
-                                    NameOID.ORGANIZATION_NAME, organization
-                            ),
-                            x509.NameAttribute(
-                                    NameOID.COMMON_NAME, common_name
-                            ),
-                    ]
-            )
+            x509.Name([
+                    x509.NameAttribute(NameOID.COUNTRY_NAME, country),
+                    x509.NameAttribute(
+                            NameOID.STATE_OR_PROVINCE_NAME, province
+                    ),
+                    x509.NameAttribute(NameOID.LOCALITY_NAME, locality),
+                    x509.NameAttribute(
+                            NameOID.ORGANIZATION_NAME, organization
+                    ),
+                    x509.NameAttribute(NameOID.COMMON_NAME, common_name),
+            ])
     )
 
     builder = builder.public_key(private_key.public_key())
@@ -331,7 +328,7 @@ def create_self_signed_certificate(
         filename (str): name of the certificate file to create
         private_key_file (str): private key file created with create_key_file
         passcode (str): passcode associated with the private_key
-        common_name (bytes): common name for the resulting certificate
+        common_name (str): common name for the resulting certificate
         dns_names (list): optional, a list of DNS Names to associate
             with this certificate
         ip_addresses (list): optional, a list of IP Addresses to associate
@@ -353,20 +350,18 @@ def create_self_signed_certificate(
     ]
 
     private_key = serialization.load_pem_private_key(
-            data=private_key, password=passcode, backend=default_backend()
+            data=private_key,
+            password=passcode.encode(),
+            backend=default_backend()
     )
 
     builder = x509.CertificateBuilder()
 
     builder = builder.serial_number(x509.random_serial_number())
     builder = builder.issuer_name(
-            x509.Name(
-                    [
-                            x509.NameAttribute(
-                                    NameOID.COMMON_NAME, common_name
-                            ),
-                    ]
-            )
+            x509.Name([
+                    x509.NameAttribute(NameOID.COMMON_NAME, common_name),
+            ])
     )
 
     valid_from = datetime.datetime.utcnow()
@@ -376,23 +371,9 @@ def create_self_signed_certificate(
     builder = builder.not_valid_after(valid_to)
 
     builder = builder.subject_name(
-            x509.Name(
-                    [
-                            x509.NameAttribute(NameOID.COUNTRY_NAME, country),
-                            x509.NameAttribute(
-                                    NameOID.STATE_OR_PROVINCE_NAME, province
-                            ),
-                            x509.NameAttribute(
-                                    NameOID.LOCALITY_NAME, locality
-                            ),
-                            x509.NameAttribute(
-                                    NameOID.ORGANIZATION_NAME, organization
-                            ),
-                            x509.NameAttribute(
-                                    NameOID.COMMON_NAME, common_name
-                            ),
-                    ]
-            )
+            x509.Name([
+                    x509.NameAttribute(NameOID.COMMON_NAME, common_name),
+            ])
     )
 
     builder = builder.public_key(private_key.public_key())
@@ -408,10 +389,18 @@ def create_self_signed_certificate(
         )
 
     builder = builder.add_extension(
-            x509.SubjectKeyIdentifier.from_public_key(
-                    private_key.public_key()
-            ),
-            critical=False
+        x509.BasicConstraints(ca=True, path_length=None), critical=True,
+    )
+
+    builder = builder.add_extension(
+        x509.AuthorityKeyIdentifier.from_issuer_public_key(
+            private_key.public_key()
+        ), critical=False
+    )
+
+    builder = builder.add_extension(
+        x509.SubjectKeyIdentifier.from_public_key(private_key.public_key()),
+        critical=False
     )
 
     client_cert = builder.sign(
