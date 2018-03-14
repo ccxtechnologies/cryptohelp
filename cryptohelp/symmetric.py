@@ -74,7 +74,10 @@ def encrypt_file(key: bytes, plain_file: str, encrypted_file: str):
     box = nacl.secret.SecretBox(key)
 
     with open(encrypted_file, 'wb') as fo, open(plain_file, 'rb') as fi:
-        chunk = fi.read(16312)  # 16384 - 32 (checksum) - 40 (NaCl adds 40)
+
+        # 16384 - 4 (file version) - 32 (checksum) - 40 (NaCl adds 40)
+        chunk = fi.read(16308)
+
         chunk = _file_version + checksum + chunk
 
         nonce = nacl.utils.random(nacl.secret.SecretBox.NONCE_SIZE)
@@ -114,8 +117,8 @@ def decrypt_file(key: bytes, encrypted_file: str, plain_file: str):
 
             if not checksum:
                 version = dec[:4]
-                checksum = dec[4:32]
-                dec = dec[32:]
+                checksum = dec[4:36]
+                dec = dec[36:]
 
             sha256.update(dec)
             fo.write(dec)
