@@ -199,10 +199,11 @@ def create_certificate_from_csr(
 
 
 def create_certificate_from_ca(
-        private_key: bytes,
-        passcode: bytes,
+        filename: str,
+        private_key_file: str,
+        passcode_file: str,
+        ca_certificate_file: str,
         common_name: bytes,
-        ca_certificate: bytes,
         dns_names: typing.List = [],
         ip_addresses: typing.List = [],
         country: str = "CA",
@@ -210,14 +211,15 @@ def create_certificate_from_ca(
         locality: str = "Ottawa",
         organization: str = "CCX Technologies Inc.",
         cert_length_days: int = 367
-) -> bytes:
+):
     """Create a x.509 Certificate.
 
     Args:
-        private_key (bytes): our private key created with create_key
-        passcode (bytes): passcode associated with the private_key
+        filename (str): name of the certificate file to create
+        private_key_file (str): private key file created with create_key_file
+        passcode_file (str): passcode file associated with the private_key
+        ca_certificate_file (str): Certificate Authority's Certificate
         common_name (bytes): common name for the resulting certificate
-        ca_certificate (bytes): Certificate Authority's Certificate
         dns_names (list): optional, a list of DNS Names to associate
             with this certificate
         ip_addresses (list): optional, a list of IP Addresses to associate
@@ -228,10 +230,16 @@ def create_certificate_from_ca(
         organization (str): optional, name of the organization
             the Certificate is for
         cert_length_days (int): optional, valid length of certificate
-
-    Returns:
-        A signed Certificate in PEM format (bytes).
     """
+
+    with open(private_key_file, 'rb') as fi:
+        private_key = fi.read()
+
+    with open(passcode_file, 'rb') as fi:
+        passcode = fi.read().strip()
+
+    with open(ca_certificate_file, 'rb') as fi:
+        ca_certificate = fi.read()
 
     _dns_names = [x509.DNSName(n) for n in dns_names]
     _ip_addresses = [
@@ -306,7 +314,8 @@ def create_certificate_from_ca(
             backend=default_backend()
     )
 
-    return client_cert.public_bytes(encoding=serialization.Encoding.PEM)
+    with open(filename, 'wb') as fo:
+        fo.write(client_cert.public_bytes(encoding=serialization.Encoding.PEM))
 
 
 def create_self_signed_certificate(
