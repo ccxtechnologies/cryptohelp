@@ -3,7 +3,6 @@
 import nacl.secret
 import nacl.utils
 import hashlib
-import binascii
 import os
 
 _file_version = b'v001'
