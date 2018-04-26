@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import sys
 from setuptools import setup
 from setuptools import find_packages
 
@@ -8,6 +9,9 @@ __url__ = 'https://github.com/ccxtechnologies'
 
 __version__ = None
 exec(open(f'{__module__}/__version__.py').read())
+
+if "--nosystemd" in sys.argv:
+    sys.argv.remove("--nosystemd")
 
 setup(
         name=__module__,
