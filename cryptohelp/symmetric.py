@@ -51,7 +51,8 @@ def decrypt(key: bytes, message: bytes):
 
 
 def encrypt_file(key: bytes, plain_file: str, encrypted_file: str):
-    """Encrypt a file using NaCl and a symmetric key, can be used on large files.
+    """Encrypt a file using NaCl and a symmetric key, can be used on
+    large files.
 
     Args:
         key (bytes): key created by create_key()
@@ -93,7 +94,8 @@ def encrypt_file(key: bytes, plain_file: str, encrypted_file: str):
 
 
 def decrypt_file(key: bytes, encrypted_file: str, plain_file: str):
-    """Decrypt a file using NaCl and a symmetric key, can be used on large files.
+    """Decrypt a file using NaCl and a symmetric key, can be used on large
+        files.
 
     Args:
         key (bytes): key created by create_key()
