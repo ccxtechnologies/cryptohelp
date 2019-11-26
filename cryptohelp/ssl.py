@@ -88,17 +88,23 @@ def create_csr(
     )
 
     csr = x509.CertificateSigningRequestBuilder().subject_name(
-            x509.Name([
-                    x509.NameAttribute(NameOID.COUNTRY_NAME, country),
-                    x509.NameAttribute(
-                            NameOID.STATE_OR_PROVINCE_NAME, province
-                    ),
-                    x509.NameAttribute(NameOID.LOCALITY_NAME, locality),
-                    x509.NameAttribute(
-                            NameOID.ORGANIZATION_NAME, organization
-                    ),
-                    x509.NameAttribute(NameOID.COMMON_NAME, common_name),
-            ])
+            x509.Name(
+                    [
+                            x509.NameAttribute(NameOID.COUNTRY_NAME, country),
+                            x509.NameAttribute(
+                                    NameOID.STATE_OR_PROVINCE_NAME, province
+                            ),
+                            x509.NameAttribute(
+                                    NameOID.LOCALITY_NAME, locality
+                            ),
+                            x509.NameAttribute(
+                                    NameOID.ORGANIZATION_NAME, organization
+                            ),
+                            x509.NameAttribute(
+                                    NameOID.COMMON_NAME, common_name
+                            ),
+                    ]
+            )
     )
 
     if _dns_names:
@@ -183,8 +189,11 @@ def create_certificate_from_csr(
     )
 
     builder = builder.add_extension(
-            x509.AuthorityKeyIdentifier.
-            from_issuer_subject_key_identifier(issuer_ski),
+            x509.AuthorityKeyIdentifier(
+                    key_identifier=issuer_ski.value.digest,
+                    authority_cert_issuer=None,
+                    authority_cert_serial_number=None
+            ),
             critical=False
     )
 
@@ -266,17 +275,23 @@ def create_certificate_from_ca(
     builder = builder.not_valid_after(valid_to)
 
     builder = builder.subject_name(
-            x509.Name([
-                    x509.NameAttribute(NameOID.COUNTRY_NAME, country),
-                    x509.NameAttribute(
-                            NameOID.STATE_OR_PROVINCE_NAME, province
-                    ),
-                    x509.NameAttribute(NameOID.LOCALITY_NAME, locality),
-                    x509.NameAttribute(
-                            NameOID.ORGANIZATION_NAME, organization
-                    ),
-                    x509.NameAttribute(NameOID.COMMON_NAME, common_name),
-            ])
+            x509.Name(
+                    [
+                            x509.NameAttribute(NameOID.COUNTRY_NAME, country),
+                            x509.NameAttribute(
+                                    NameOID.STATE_OR_PROVINCE_NAME, province
+                            ),
+                            x509.NameAttribute(
+                                    NameOID.LOCALITY_NAME, locality
+                            ),
+                            x509.NameAttribute(
+                                    NameOID.ORGANIZATION_NAME, organization
+                            ),
+                            x509.NameAttribute(
+                                    NameOID.COMMON_NAME, common_name
+                            ),
+                    ]
+            )
     )
 
     builder = builder.public_key(private_key.public_key())
@@ -303,8 +318,11 @@ def create_certificate_from_ca(
     )
 
     builder = builder.add_extension(
-            x509.AuthorityKeyIdentifier.
-            from_issuer_subject_key_identifier(issuer_ski),
+            x509.AuthorityKeyIdentifier(
+                    key_identifier=issuer_ski.value.digest,
+                    authority_cert_issuer=None,
+                    authority_cert_serial_number=None
+            ),
             critical=False
     )
 
@@ -368,7 +386,8 @@ def create_self_signed_certificate(
 
     builder = builder.serial_number(x509.random_serial_number())
     builder = builder.issuer_name(
-            x509.Name([
+            x509.
+            Name([
                     x509.NameAttribute(NameOID.COMMON_NAME, common_name),
             ])
     )
@@ -380,7 +399,8 @@ def create_self_signed_certificate(
     builder = builder.not_valid_after(valid_to)
 
     builder = builder.subject_name(
-            x509.Name([
+            x509.
+            Name([
                     x509.NameAttribute(NameOID.COMMON_NAME, common_name),
             ])
     )
@@ -398,18 +418,22 @@ def create_self_signed_certificate(
         )
 
     builder = builder.add_extension(
-        x509.BasicConstraints(ca=True, path_length=None), critical=True,
+            x509.BasicConstraints(ca=True, path_length=None),
+            critical=True,
     )
 
     builder = builder.add_extension(
-        x509.AuthorityKeyIdentifier.from_issuer_public_key(
-            private_key.public_key()
-        ), critical=False
+            x509.AuthorityKeyIdentifier.from_issuer_public_key(
+                    private_key.public_key()
+            ),
+            critical=False
     )
 
     builder = builder.add_extension(
-        x509.SubjectKeyIdentifier.from_public_key(private_key.public_key()),
-        critical=False
+            x509.SubjectKeyIdentifier.from_public_key(
+                    private_key.public_key()
+            ),
+            critical=False
     )
 
     client_cert = builder.sign(
