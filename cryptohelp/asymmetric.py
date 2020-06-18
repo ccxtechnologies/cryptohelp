@@ -6,8 +6,8 @@ import nacl.public
 
 
 def create_private_key_file(filename: str):
-    """Create a private key suitable for use with these asymmetric crypto tools,
-        and store it in a file.
+    """Create a private key suitable for use with these asymmetric crypto
+        tools, and store it in a file.
     """
 
     with open(filename, 'wb') as fo:
