@@ -24,12 +24,17 @@ def create_key_file(filename: str, passcode: str = ''):
             public_exponent=65537, key_size=4096, backend=default_backend()
     )
 
+    if passcode:
+        encryption_algorithm = serialization.BestAvailableEncryption(
+                passcode.encode()
+        )
+    else:
+        encryption_algorithm = serialization.NoEncryption()
+
     key_bytes = key.private_bytes(
             encoding=serialization.Encoding.PEM,
             format=serialization.PrivateFormat.TraditionalOpenSSL,
-            encryption_algorithm=serialization.BestAvailableEncryption(
-                    passcode.encode()
-            ),
+            encryption_algorithm=encryption_algorithm
     )
 
     with open(filename, "wb") as fo:
@@ -376,11 +381,16 @@ def create_self_signed_certificate(
             x509.IPAddress(ipaddress.IPv4Address(a)) for a in ip_addresses
     ]
 
-    private_key = serialization.load_pem_private_key(
-            data=private_key,
-            password=passcode.encode(),
-            backend=default_backend()
-    )
+    if passcode:
+        private_key = serialization.load_pem_private_key(
+                data=private_key,
+                password=passcode.encode(),
+                backend=default_backend()
+        )
+    else:
+        private_key = serialization.load_pem_private_key(
+                private_key, None, default_backend()
+        )
 
     builder = x509.CertificateBuilder()
 
