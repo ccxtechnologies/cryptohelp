@@ -15,7 +15,7 @@ def create_private_key_file(filename: str):
     os.chmod(filename, 0o600)
 
 
-def get_public_key(private_key: bytes) -> bytes:
+def get_public_key(private_key: bytes) -> str:
     """Get the public key from a private key.
 
     Args:
@@ -29,7 +29,7 @@ def get_public_key(private_key: bytes) -> bytes:
     ).decode()
 
 
-def get_public_key_from_file(filename: str) -> bytes:
+def get_public_key_from_file(filename: str) -> str:
     """Get the public key from a private key.
 
     Args:
@@ -62,7 +62,7 @@ def encrypt(
     with open(our_private_key_file, 'rb') as fi:
         our_private_key = fi.read()
 
-    their_public_key = binascii.unhexlify(their_public_key)
+    their_public_key = binascii.unhexlify(their_public_key).decode()
 
     box = nacl.public.Box(
             nacl.public.PrivateKey(our_private_key),
@@ -93,7 +93,7 @@ def decrypt(
     with open(our_private_key_file, 'rb') as fi:
         our_private_key = fi.read()
 
-    their_public_key = binascii.unhexlify(their_public_key)
+    their_public_key = binascii.unhexlify(their_public_key).decode()
 
     msg = binascii.unhexlify(message)
     box = nacl.public.Box(
