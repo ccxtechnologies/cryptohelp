@@ -48,8 +48,8 @@ def create_csr(
         private_key_file: str,
         passcode: str,
         common_name: str,
-        dns_names: typing.List = [],
-        ip_addresses: typing.List = [],
+        dns_names: typing.List = None,
+        ip_addresses: typing.List = None,
         country: str = "CA",
         province: str = "Ontario",
         locality: str = "Ottawa",
@@ -81,11 +81,6 @@ def create_csr(
     with open(private_key_file, 'rb') as fi:
         private_key = fi.read()
 
-    _dns_names = [x509.DNSName(n) for n in dns_names]
-    _ip_addresses = [
-            x509.IPAddress(ipaddress.IPv4Address(str(a))) for a in ip_addresses
-    ]
-
     key = serialization.load_pem_private_key(
             data=private_key,
             password=passcode.encode(),
@@ -112,12 +107,16 @@ def create_csr(
             )
     )
 
-    if _dns_names:
+    if dns_names:
+        _dns_names = [x509.DNSName(n) for n in dns_names]
         csr = csr.add_extension(
                 x509.SubjectAlternativeName(_dns_names), critical=False
         )
 
-    if _ip_addresses:
+    if ip_addresses:
+        _ip_addresses = [
+            x509.IPAddress(ipaddress.IPv4Address(str(a))) for a in ip_addresses
+        ]
         csr = csr.add_extension(
                 x509.SubjectAlternativeName(_ip_addresses), critical=False
         )
@@ -218,8 +217,8 @@ def create_certificate_from_ca(
         passcode_file: str,
         ca_certificate_file: str,
         common_name: bytes,
-        dns_names: typing.List = [],
-        ip_addresses: typing.List = [],
+        dns_names: typing.List = None,
+        ip_addresses: typing.List = None,
         country: str = "CA",
         province: str = "Ontario",
         locality: str = "Ottawa",
@@ -254,6 +253,12 @@ def create_certificate_from_ca(
 
     with open(ca_certificate_file, 'rb') as fi:
         ca_certificate = fi.read()
+
+    if dns_names is None:
+        dns_names = []
+
+    if ip_addresses is None:
+        ip_addresses = []
 
     _dns_names = [x509.DNSName(n) for n in dns_names]
     _ip_addresses = [
@@ -346,8 +351,8 @@ def create_self_signed_certificate(
         private_key_file: str,
         passcode: str,
         common_name: str,
-        dns_names: typing.List = [],
-        ip_addresses: typing.List = [],
+        dns_names: typing.List = None,
+        ip_addresses: typing.List = None,
         cert_length_days: int = 367
 ) -> bytes:
     """Create a x.509 Certificate.
@@ -366,6 +371,12 @@ def create_self_signed_certificate(
 
     with open(private_key_file, 'rb') as fi:
         private_key = fi.read()
+
+    if dns_names is None:
+        dns_names = []
+
+    if ip_addresses is None:
+        ip_addresses = []
 
     _dns_names = [x509.DNSName(n) for n in dns_names]
     _ip_addresses = [
