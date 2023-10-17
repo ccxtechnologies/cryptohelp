@@ -11,7 +11,7 @@ def create_private_key_file(filename: str):
     """
 
     with open(filename, 'wb') as fo:
-        fo.write(nacl.public.PrivateKey.generate()._private_key)
+        fo.write(nacl.public.PrivateKey.generate()._private_key)  # noqa pylint: disable=protected-access
     os.chmod(filename, 0o600)
 
 
@@ -25,7 +25,7 @@ def get_public_key(private_key: bytes) -> bytes:
         A public key that is safe to share (bytes).
     """
     return binascii.hexlify(
-            nacl.public.PrivateKey(private_key).public_key._public_key
+            nacl.public.PrivateKey(private_key).public_key._public_key  # noqa pylint: disable=protected-access
     ).decode()
 
 
