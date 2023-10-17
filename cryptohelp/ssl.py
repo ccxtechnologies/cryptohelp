@@ -348,10 +348,6 @@ def create_self_signed_certificate(
         common_name: str,
         dns_names: typing.List = [],
         ip_addresses: typing.List = [],
-        country: str = "CA",
-        province: str = "Ontario",
-        locality: str = "Ottawa",
-        organization: str = "CCX Technologies Inc.",
         cert_length_days: int = 367
 ) -> bytes:
     """Create a x.509 Certificate.
@@ -365,11 +361,6 @@ def create_self_signed_certificate(
             with this certificate
         ip_addresses (list): optional, a list of IP Addresses to associate
             with this certificate
-        country (str): optional, name of the country the Certificate is for
-        province (str): optional, name of the province the Certificate is for
-        locality (str): optional, name of the locality the Certificate is for
-        organization (str): optional, name of the organization
-            the Certificate is for
         cert_length_days (int): optional, valid length of certificate
     """
 
