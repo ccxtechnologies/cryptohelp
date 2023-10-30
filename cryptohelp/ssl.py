@@ -254,17 +254,6 @@ def create_certificate_from_ca(
     with open(ca_certificate_file, 'rb') as fi:
         ca_certificate = fi.read()
 
-    if dns_names is None:
-        dns_names = []
-
-    if ip_addresses is None:
-        ip_addresses = []
-
-    _dns_names = [x509.DNSName(n) for n in dns_names]
-    _ip_addresses = [
-            x509.IPAddress(ipaddress.IPv4Address(str(a))) for a in ip_addresses
-    ]
-
     private_key = serialization.load_pem_private_key(
             data=private_key, password=passcode, backend=default_backend()
     )
@@ -306,12 +295,16 @@ def create_certificate_from_ca(
 
     builder = builder.public_key(private_key.public_key())
 
-    if _dns_names:
+    if dns_names:
+        _dns_names = [x509.DNSName(n) for n in dns_names]
         builder = builder.add_extension(
                 x509.SubjectAlternativeName(_dns_names), critical=False
         )
 
-    if _ip_addresses:
+    if ip_addresses:
+        _ip_addresses = [
+            x509.IPAddress(ipaddress.IPv4Address(str(a))) for a in ip_addresses
+        ]
         builder = builder.add_extension(
                 x509.SubjectAlternativeName(_ip_addresses), critical=False
         )
@@ -372,17 +365,6 @@ def create_self_signed_certificate(
     with open(private_key_file, 'rb') as fi:
         private_key = fi.read()
 
-    if dns_names is None:
-        dns_names = []
-
-    if ip_addresses is None:
-        ip_addresses = []
-
-    _dns_names = [x509.DNSName(n) for n in dns_names]
-    _ip_addresses = [
-            x509.IPAddress(ipaddress.IPv4Address(a)) for a in ip_addresses
-    ]
-
     if passcode:
         private_key = serialization.load_pem_private_key(
                 data=private_key,
@@ -419,12 +401,16 @@ def create_self_signed_certificate(
 
     builder = builder.public_key(private_key.public_key())
 
-    if _dns_names:
+    if dns_names:
+        _dns_names = [x509.DNSName(n) for n in dns_names]
         builder = builder.add_extension(
                 x509.SubjectAlternativeName(_dns_names), critical=False
         )
 
-    if _ip_addresses:
+    if ip_addresses:
+        _ip_addresses = [
+            x509.IPAddress(ipaddress.IPv4Address(a)) for a in ip_addresses
+        ]
         builder = builder.add_extension(
                 x509.SubjectAlternativeName(_ip_addresses), critical=False
         )
