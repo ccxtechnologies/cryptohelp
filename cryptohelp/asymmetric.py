@@ -15,28 +15,28 @@ def create_private_key_file(filename: str):
     os.chmod(filename, 0o600)
 
 
-def get_public_key(private_key: bytes) -> bytes:
+def get_public_key(private_key: bytes) -> str:
     """Get the public key from a private key.
 
     Args:
         private_key (bytes): key created by create_private_key()
 
     Returns:
-        A public key that is safe to share (bytes).
+        A public key.
     """
     return binascii.hexlify(
             nacl.public.PrivateKey(private_key).public_key._public_key  # noqa pylint: disable=protected-access
     ).decode()
 
 
-def get_public_key_from_file(filename: str) -> bytes:
-    """Get the public key from a private key.
+def get_public_key_from_file(filename: str) -> str:
+    """Get the public key from a file.
 
     Args:
-        private_key (bytes): key created by create_private_key()
+        filename (str): file to get the key from
 
     Returns:
-        A public key that is safe to share (bytes).
+        A public key.
     """
 
     with open(filename, 'rb') as fi:
