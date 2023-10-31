@@ -62,11 +62,11 @@ def encrypt(
     with open(our_private_key_file, 'rb') as fi:
         our_private_key = fi.read()
 
-    their_public_key = binascii.unhexlify(their_public_key)
+    _their_public_key = binascii.unhexlify(their_public_key)
 
     box = nacl.public.Box(
             nacl.public.PrivateKey(our_private_key),
-            nacl.public.PublicKey(their_public_key)
+            nacl.public.PublicKey(_their_public_key)
     )
 
     nonce = nacl.utils.random(nacl.secret.SecretBox.NONCE_SIZE)
@@ -93,12 +93,12 @@ def decrypt(
     with open(our_private_key_file, 'rb') as fi:
         our_private_key = fi.read()
 
-    their_public_key = binascii.unhexlify(their_public_key)
+    _their_public_key = binascii.unhexlify(their_public_key)
 
     msg = binascii.unhexlify(message)
     box = nacl.public.Box(
             nacl.public.PrivateKey(our_private_key),
-            nacl.public.PublicKey(their_public_key)
+            nacl.public.PublicKey(_their_public_key)
     )
     dec = box.decrypt(msg)
     return dec
