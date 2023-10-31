@@ -29,7 +29,8 @@ def create_key_file(filename: str, passcode: str = ''):
                 passcode.encode()
         )
     else:
-        encryption_algorithm = serialization.NoEncryption()
+        encryption_algorithm = \
+                serialization.NoEncryption()  # type: ignore[assignment]
 
     key_bytes = key.private_bytes(
             encoding=serialization.Encoding.PEM,
