@@ -56,7 +56,7 @@ def encrypt(
         message (bytes): message to encrypt
 
     Returns:
-        An encrypted message (bytes).
+        An encrypted message (str).
     """
 
     with open(our_private_key_file, 'rb') as fi:
@@ -77,7 +77,7 @@ def encrypt(
 
 def decrypt(
         our_private_key_file: str, their_public_key: str, message: bytes
-) -> str:
+) -> bytes:
     """Decrypt a message using NaCl and an asymmetric key-pair.
 
     Args:
