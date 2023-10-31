@@ -54,7 +54,7 @@ def create_csr(
         province: str = "Ontario",
         locality: str = "Ottawa",
         organization: str = "CCX Technologies Inc.",
-) -> bytes:
+):
     """Create a x.509 Certificate Signing Request (CSR).
 
     Can be sent to another server which can create an Intermediate Certificate.
@@ -73,9 +73,6 @@ def create_csr(
         locality (str): optional, name of the locality the Certificate is for
         organization (str): optional, name of the organization
             the Certificate is for
-
-    Returns:
-        A signed Certificate Signing Request in PEM format (bytes).
     """
 
     with open(private_key_file, 'rb') as fi:
@@ -134,7 +131,7 @@ def create_certificate_from_csr(
         ca_private_key_file: str,
         ca_passcode: str,
         cert_length_days: int = 367
-) -> bytes:
+):
     """Create a x.509 Certificate from a Certificate Signing Request (CSR).
 
     Args:
@@ -347,7 +344,7 @@ def create_self_signed_certificate(
         dns_names: typing.List = None,
         ip_addresses: typing.List = None,
         cert_length_days: int = 367
-) -> bytes:
+):
     """Create a x.509 Certificate.
 
     Args:
