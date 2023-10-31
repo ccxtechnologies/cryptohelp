@@ -119,10 +119,10 @@ def create_csr(
                 x509.SubjectAlternativeName(_ip_addresses), critical=False
         )
 
-    csr = csr.sign(key, hashes.SHA512(), default_backend())
+    csr_signed = csr.sign(key, hashes.SHA512(), default_backend())
 
     with open(filename, 'wb') as fo:
-        fo.write(csr.public_bytes(encoding=serialization.Encoding.PEM))
+        fo.write(csr_signed.public_bytes(encoding=serialization.Encoding.PEM))
 
 
 def create_certificate_from_csr(
@@ -244,7 +244,7 @@ def create_certificate_from_ca(
     """
 
     with open(private_key_file, 'rb') as fi:
-        private_key = fi.read()
+        _private_key = fi.read()
 
     with open(passcode_file, 'rb') as fi:
         passcode = fi.read().strip()
@@ -253,7 +253,7 @@ def create_certificate_from_ca(
         ca_certificate = fi.read()
 
     private_key = serialization.load_pem_private_key(
-            data=private_key, password=passcode, backend=default_backend()
+            data=_private_key, password=passcode, backend=default_backend()
     )
 
     _ca_cert = x509.load_pem_x509_certificate(
@@ -361,17 +361,17 @@ def create_self_signed_certificate(
     """
 
     with open(private_key_file, 'rb') as fi:
-        private_key = fi.read()
+        _private_key = fi.read()
 
     if passcode:
         private_key = serialization.load_pem_private_key(
-                data=private_key,
+                data=_private_key,
                 password=passcode.encode(),
                 backend=default_backend()
         )
     else:
         private_key = serialization.load_pem_private_key(
-                private_key, None, default_backend()
+                _private_key, None, default_backend()
         )
 
     builder = x509.CertificateBuilder()
