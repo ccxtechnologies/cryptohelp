@@ -51,7 +51,7 @@ def encrypt(
 
     Args:
         our_private_key_file (str): name of our private key file
-        their_public_key (bytes): pubic key of the system we are
+        their_public_key (str): pubic key of the system we are
             sending our message to
         message (bytes): message to encrypt
 
