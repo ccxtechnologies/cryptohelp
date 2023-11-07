@@ -29,7 +29,8 @@ def create_key_file(filename: str, passcode: str = ''):
                 passcode.encode()
         )
     else:
-        encryption_algorithm = serialization.NoEncryption()
+        encryption_algorithm = \
+                serialization.NoEncryption()  # type: ignore[assignment]
 
     key_bytes = key.private_bytes(
             encoding=serialization.Encoding.PEM,
@@ -48,13 +49,13 @@ def create_csr(
         private_key_file: str,
         passcode: str,
         common_name: str,
-        dns_names: typing.List = [],
-        ip_addresses: typing.List = [],
+        dns_names: typing.List = None,
+        ip_addresses: typing.List = None,
         country: str = "CA",
         province: str = "Ontario",
         locality: str = "Ottawa",
         organization: str = "CCX Technologies Inc.",
-) -> bytes:
+):
     """Create a x.509 Certificate Signing Request (CSR).
 
     Can be sent to another server which can create an Intermediate Certificate.
@@ -73,18 +74,10 @@ def create_csr(
         locality (str): optional, name of the locality the Certificate is for
         organization (str): optional, name of the organization
             the Certificate is for
-
-    Returns:
-        A signed Certificate Signing Request in PEM format (bytes).
     """
 
     with open(private_key_file, 'rb') as fi:
         private_key = fi.read()
-
-    _dns_names = [x509.DNSName(n) for n in dns_names]
-    _ip_addresses = [
-            x509.IPAddress(ipaddress.IPv4Address(str(a))) for a in ip_addresses
-    ]
 
     key = serialization.load_pem_private_key(
             data=private_key,
@@ -112,20 +105,28 @@ def create_csr(
             )
     )
 
-    if _dns_names:
+    if dns_names:
+        _dns_names = [x509.DNSName(n) for n in dns_names]
         csr = csr.add_extension(
                 x509.SubjectAlternativeName(_dns_names), critical=False
         )
 
-    if _ip_addresses:
+    if ip_addresses:
+        _ip_addresses = [
+            x509.IPAddress(ipaddress.IPv4Address(str(a))) for a in ip_addresses
+        ]
         csr = csr.add_extension(
                 x509.SubjectAlternativeName(_ip_addresses), critical=False
         )
 
-    csr = csr.sign(key, hashes.SHA512(), default_backend())
+    csr_signed = csr.sign(
+        key,  # type:ignore[arg-type]
+        hashes.SHA512(),
+        default_backend()
+    )
 
     with open(filename, 'wb') as fo:
-        fo.write(csr.public_bytes(encoding=serialization.Encoding.PEM))
+        fo.write(csr_signed.public_bytes(encoding=serialization.Encoding.PEM))
 
 
 def create_certificate_from_csr(
@@ -135,7 +136,7 @@ def create_certificate_from_csr(
         ca_private_key_file: str,
         ca_passcode: str,
         cert_length_days: int = 367
-) -> bytes:
+):
     """Create a x.509 Certificate from a Certificate Signing Request (CSR).
 
     Args:
@@ -203,7 +204,7 @@ def create_certificate_from_csr(
     )
 
     client_cert = builder.sign(
-            private_key=private_key,
+            private_key=private_key,  # type:ignore[arg-type]
             algorithm=hashes.SHA512(),
             backend=default_backend()
     )
@@ -218,8 +219,8 @@ def create_certificate_from_ca(
         passcode_file: str,
         ca_certificate_file: str,
         common_name: bytes,
-        dns_names: typing.List = [],
-        ip_addresses: typing.List = [],
+        dns_names: typing.List = None,
+        ip_addresses: typing.List = None,
         country: str = "CA",
         province: str = "Ontario",
         locality: str = "Ottawa",
@@ -247,7 +248,7 @@ def create_certificate_from_ca(
     """
 
     with open(private_key_file, 'rb') as fi:
-        private_key = fi.read()
+        _private_key = fi.read()
 
     with open(passcode_file, 'rb') as fi:
         passcode = fi.read().strip()
@@ -255,13 +256,8 @@ def create_certificate_from_ca(
     with open(ca_certificate_file, 'rb') as fi:
         ca_certificate = fi.read()
 
-    _dns_names = [x509.DNSName(n) for n in dns_names]
-    _ip_addresses = [
-            x509.IPAddress(ipaddress.IPv4Address(str(a))) for a in ip_addresses
-    ]
-
     private_key = serialization.load_pem_private_key(
-            data=private_key, password=passcode, backend=default_backend()
+            data=_private_key, password=passcode, backend=default_backend()
     )
 
     _ca_cert = x509.load_pem_x509_certificate(
@@ -299,21 +295,27 @@ def create_certificate_from_ca(
             )
     )
 
-    builder = builder.public_key(private_key.public_key())
+    builder = builder.public_key(
+        private_key.public_key()  # type:ignore[arg-type]
+    )
 
-    if _dns_names:
+    if dns_names:
+        _dns_names = [x509.DNSName(n) for n in dns_names]
         builder = builder.add_extension(
                 x509.SubjectAlternativeName(_dns_names), critical=False
         )
 
-    if _ip_addresses:
+    if ip_addresses:
+        _ip_addresses = [
+            x509.IPAddress(ipaddress.IPv4Address(str(a))) for a in ip_addresses
+        ]
         builder = builder.add_extension(
                 x509.SubjectAlternativeName(_ip_addresses), critical=False
         )
 
     builder = builder.add_extension(
             x509.SubjectKeyIdentifier.from_public_key(
-                    private_key.public_key()
+                    private_key.public_key()  # type:ignore[arg-type]
             ),
             critical=False
     )
@@ -332,7 +334,7 @@ def create_certificate_from_ca(
     )
 
     client_cert = builder.sign(
-            private_key=private_key,
+            private_key=private_key,  # type:ignore[arg-type]
             algorithm=hashes.SHA512(),
             backend=default_backend()
     )
@@ -346,14 +348,10 @@ def create_self_signed_certificate(
         private_key_file: str,
         passcode: str,
         common_name: str,
-        dns_names: typing.List = [],
-        ip_addresses: typing.List = [],
-        country: str = "CA",
-        province: str = "Ontario",
-        locality: str = "Ottawa",
-        organization: str = "CCX Technologies Inc.",
+        dns_names: typing.List = None,
+        ip_addresses: typing.List = None,
         cert_length_days: int = 367
-) -> bytes:
+):
     """Create a x.509 Certificate.
 
     Args:
@@ -365,31 +363,21 @@ def create_self_signed_certificate(
             with this certificate
         ip_addresses (list): optional, a list of IP Addresses to associate
             with this certificate
-        country (str): optional, name of the country the Certificate is for
-        province (str): optional, name of the province the Certificate is for
-        locality (str): optional, name of the locality the Certificate is for
-        organization (str): optional, name of the organization
-            the Certificate is for
         cert_length_days (int): optional, valid length of certificate
     """
 
     with open(private_key_file, 'rb') as fi:
-        private_key = fi.read()
-
-    _dns_names = [x509.DNSName(n) for n in dns_names]
-    _ip_addresses = [
-            x509.IPAddress(ipaddress.IPv4Address(a)) for a in ip_addresses
-    ]
+        _private_key = fi.read()
 
     if passcode:
         private_key = serialization.load_pem_private_key(
-                data=private_key,
+                data=_private_key,
                 password=passcode.encode(),
                 backend=default_backend()
         )
     else:
         private_key = serialization.load_pem_private_key(
-                private_key, None, default_backend()
+                _private_key, None, default_backend()
         )
 
     builder = x509.CertificateBuilder()
@@ -415,14 +403,20 @@ def create_self_signed_certificate(
             ])
     )
 
-    builder = builder.public_key(private_key.public_key())
+    builder = builder.public_key(
+        private_key.public_key()  # type:ignore[arg-type]
+    )
 
-    if _dns_names:
+    if dns_names:
+        _dns_names = [x509.DNSName(n) for n in dns_names]
         builder = builder.add_extension(
                 x509.SubjectAlternativeName(_dns_names), critical=False
         )
 
-    if _ip_addresses:
+    if ip_addresses:
+        _ip_addresses = [
+            x509.IPAddress(ipaddress.IPv4Address(a)) for a in ip_addresses
+        ]
         builder = builder.add_extension(
                 x509.SubjectAlternativeName(_ip_addresses), critical=False
         )
@@ -434,20 +428,20 @@ def create_self_signed_certificate(
 
     builder = builder.add_extension(
             x509.AuthorityKeyIdentifier.from_issuer_public_key(
-                    private_key.public_key()
+                    private_key.public_key()  # type:ignore[arg-type]
             ),
             critical=False
     )
 
     builder = builder.add_extension(
             x509.SubjectKeyIdentifier.from_public_key(
-                    private_key.public_key()
+                    private_key.public_key()  # type:ignore[arg-type]
             ),
             critical=False
     )
 
     client_cert = builder.sign(
-            private_key=private_key,
+            private_key=private_key,  # type:ignore[arg-type]
             algorithm=hashes.SHA512(),
             backend=default_backend()
     )

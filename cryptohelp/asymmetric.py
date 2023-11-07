@@ -11,32 +11,32 @@ def create_private_key_file(filename: str):
     """
 
     with open(filename, 'wb') as fo:
-        fo.write(nacl.public.PrivateKey.generate()._private_key)
+        fo.write(nacl.public.PrivateKey.generate()._private_key)  # noqa pylint: disable=protected-access
     os.chmod(filename, 0o600)
 
 
-def get_public_key(private_key: bytes) -> bytes:
+def get_public_key(private_key: bytes) -> str:
     """Get the public key from a private key.
 
     Args:
         private_key (bytes): key created by create_private_key()
 
     Returns:
-        A public key that is safe to share (bytes).
+        A public key.
     """
     return binascii.hexlify(
-            nacl.public.PrivateKey(private_key).public_key._public_key
+            nacl.public.PrivateKey(private_key).public_key._public_key  # noqa pylint: disable=protected-access
     ).decode()
 
 
-def get_public_key_from_file(filename: str) -> bytes:
-    """Get the public key from a private key.
+def get_public_key_from_file(filename: str) -> str:
+    """Get the public key from a file.
 
     Args:
-        private_key (bytes): key created by create_private_key()
+        filename (str): file to get the key from
 
     Returns:
-        A public key that is safe to share (bytes).
+        A public key.
     """
 
     with open(filename, 'rb') as fi:
@@ -51,22 +51,22 @@ def encrypt(
 
     Args:
         our_private_key_file (str): name of our private key file
-        their_public_key (bytes): pubic key of the system we are
+        their_public_key (str): pubic key of the system we are
             sending our message to
         message (bytes): message to encrypt
 
     Returns:
-        An encrypted message (bytes).
+        An encrypted message (str).
     """
 
     with open(our_private_key_file, 'rb') as fi:
         our_private_key = fi.read()
 
-    their_public_key = binascii.unhexlify(their_public_key)
+    _their_public_key = binascii.unhexlify(their_public_key)
 
     box = nacl.public.Box(
             nacl.public.PrivateKey(our_private_key),
-            nacl.public.PublicKey(their_public_key)
+            nacl.public.PublicKey(_their_public_key)
     )
 
     nonce = nacl.utils.random(nacl.secret.SecretBox.NONCE_SIZE)
@@ -77,7 +77,7 @@ def encrypt(
 
 def decrypt(
         our_private_key_file: str, their_public_key: str, message: bytes
-) -> str:
+) -> bytes:
     """Decrypt a message using NaCl and an asymmetric key-pair.
 
     Args:
@@ -93,12 +93,12 @@ def decrypt(
     with open(our_private_key_file, 'rb') as fi:
         our_private_key = fi.read()
 
-    their_public_key = binascii.unhexlify(their_public_key)
+    _their_public_key = binascii.unhexlify(their_public_key)
 
     msg = binascii.unhexlify(message)
     box = nacl.public.Box(
             nacl.public.PrivateKey(our_private_key),
-            nacl.public.PublicKey(their_public_key)
+            nacl.public.PublicKey(_their_public_key)
     )
     dec = box.decrypt(msg)
     return dec
