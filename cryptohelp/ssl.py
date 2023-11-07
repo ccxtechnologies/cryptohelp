@@ -119,7 +119,11 @@ def create_csr(
                 x509.SubjectAlternativeName(_ip_addresses), critical=False
         )
 
-    csr_signed = csr.sign(key, hashes.SHA512(), default_backend())
+    csr_signed = csr.sign(
+        key,  # type:ignore[arg-type]
+        hashes.SHA512(),
+        default_backend()
+    )
 
     with open(filename, 'wb') as fo:
         fo.write(csr_signed.public_bytes(encoding=serialization.Encoding.PEM))
@@ -200,7 +204,7 @@ def create_certificate_from_csr(
     )
 
     client_cert = builder.sign(
-            private_key=private_key,
+            private_key=private_key,  # type:ignore[arg-type]
             algorithm=hashes.SHA512(),
             backend=default_backend()
     )
@@ -291,7 +295,9 @@ def create_certificate_from_ca(
             )
     )
 
-    builder = builder.public_key(private_key.public_key())
+    builder = builder.public_key(
+        private_key.public_key()  # type:ignore[arg-type]
+    )
 
     if dns_names:
         _dns_names = [x509.DNSName(n) for n in dns_names]
@@ -309,7 +315,7 @@ def create_certificate_from_ca(
 
     builder = builder.add_extension(
             x509.SubjectKeyIdentifier.from_public_key(
-                    private_key.public_key()
+                    private_key.public_key()  # type:ignore[arg-type]
             ),
             critical=False
     )
@@ -328,7 +334,7 @@ def create_certificate_from_ca(
     )
 
     client_cert = builder.sign(
-            private_key=private_key,
+            private_key=private_key,  # type:ignore[arg-type]
             algorithm=hashes.SHA512(),
             backend=default_backend()
     )
@@ -397,7 +403,9 @@ def create_self_signed_certificate(
             ])
     )
 
-    builder = builder.public_key(private_key.public_key())
+    builder = builder.public_key(
+        private_key.public_key()  # type:ignore[arg-type]
+    )
 
     if dns_names:
         _dns_names = [x509.DNSName(n) for n in dns_names]
@@ -420,20 +428,20 @@ def create_self_signed_certificate(
 
     builder = builder.add_extension(
             x509.AuthorityKeyIdentifier.from_issuer_public_key(
-                    private_key.public_key()
+                    private_key.public_key()  # type:ignore[arg-type]
             ),
             critical=False
     )
 
     builder = builder.add_extension(
             x509.SubjectKeyIdentifier.from_public_key(
-                    private_key.public_key()
+                    private_key.public_key()  # type:ignore[arg-type]
             ),
             critical=False
     )
 
     client_cert = builder.sign(
-            private_key=private_key,
+            private_key=private_key,  # type:ignore[arg-type]
             algorithm=hashes.SHA512(),
             backend=default_backend()
     )
