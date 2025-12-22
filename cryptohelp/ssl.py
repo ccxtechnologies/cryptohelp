@@ -113,16 +113,17 @@ def create_csr(
 
     if ip_addresses:
         _ip_addresses = [
-            x509.IPAddress(ipaddress.IPv4Address(str(a))) for a in ip_addresses
+                x509.IPAddress(ipaddress.IPv4Address(str(a)))
+                for a in ip_addresses
         ]
         csr = csr.add_extension(
                 x509.SubjectAlternativeName(_ip_addresses), critical=False
         )
 
     csr_signed = csr.sign(
-        key,  # type:ignore[arg-type]
-        hashes.SHA512(),
-        default_backend()
+            key,  # type:ignore[arg-type]
+            hashes.SHA512(),
+            default_backend()
     )
 
     with open(filename, 'wb') as fo:
@@ -296,7 +297,7 @@ def create_certificate_from_ca(
     )
 
     builder = builder.public_key(
-        private_key.public_key()  # type:ignore[arg-type]
+            private_key.public_key()  # type:ignore[arg-type]
     )
 
     if dns_names:
@@ -307,7 +308,8 @@ def create_certificate_from_ca(
 
     if ip_addresses:
         _ip_addresses = [
-            x509.IPAddress(ipaddress.IPv4Address(str(a))) for a in ip_addresses
+                x509.IPAddress(ipaddress.IPv4Address(str(a)))
+                for a in ip_addresses
         ]
         builder = builder.add_extension(
                 x509.SubjectAlternativeName(_ip_addresses), critical=False
@@ -404,7 +406,7 @@ def create_self_signed_certificate(
     )
 
     builder = builder.public_key(
-        private_key.public_key()  # type:ignore[arg-type]
+            private_key.public_key()  # type:ignore[arg-type]
     )
 
     if dns_names:
@@ -415,7 +417,7 @@ def create_self_signed_certificate(
 
     if ip_addresses:
         _ip_addresses = [
-            x509.IPAddress(ipaddress.IPv4Address(a)) for a in ip_addresses
+                x509.IPAddress(ipaddress.IPv4Address(a)) for a in ip_addresses
         ]
         builder = builder.add_extension(
                 x509.SubjectAlternativeName(_ip_addresses), critical=False

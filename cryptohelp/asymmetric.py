@@ -1,8 +1,10 @@
-# Copyright: 2018, CCX Technologies
+# Copyright: 2018-2025, CCX Technologies
 
 import os
 import binascii
 import nacl.public
+import nacl.secret
+import nacl.utils
 
 
 def create_private_key_file(filename: str):
